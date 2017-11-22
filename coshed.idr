@@ -8,14 +8,13 @@ import Data.So
 --------------------------------------------------------------------------
 -- Universes
 --------------------------------------------------------------------------
+
 data CryptTy = AES | RC4 -- | ElGamal | RSA | ...
 
-||| PCI refers to the schema : Prewatermark -> Crypt -> Insert
+data WmTy = GIG  
 
-data WmTy = GIG | 
-
-data Ty   = BOOL | NAT | TEXT | WATERMARK WmTy Ty | CHAR | IMAGE
-          | CRYPT CryptTy Ty | DATE 
+data Ty   = BOOL | NAT | TEXT | WATERMARK WmTy Ty | CHAR 
+          | CRYPT CryptTy Ty 
 
 data Entity = Genetician | T3rdP | Cloud
                 
@@ -24,8 +23,6 @@ interpTy BOOL  = Bool
 interpTy NAT   = Nat
 interpTy CHAR  = Char
 interpTy TEXT  = String
-interpTy DATE  = String
-interpTy IMAGE = Vect 16 (Vect 16 Nat)
 interpTy (CRYPT _ _) = String
 interpTy (WATERMARK wms ty) = (interpTy ty) 
 
@@ -52,9 +49,7 @@ Eq CryptTy where
 
  
 Eq WmTy where 
-  WIT  ==  WIT   = True 
   GIG ==  GIG  = True
-  PCI ==  PCI  = True
   _   ==  _    = False
 
 
@@ -62,9 +57,7 @@ Eq Ty where
    BOOL                    == BOOL                   = True
    NAT                     == NAT                    = True
    TEXT                    == TEXT                   = True 
-   IMAGE                   == IMAGE                  = True
    CHAR                    == CHAR                   = True  
-   DATE                    == DATE                   = True
    (WATERMARK x y)         == (WATERMARK z t)        = x==z && y==t
    (CRYPT x y)             == (CRYPT  z t)           = x==z && y==t
    _                       == _                      = False     
@@ -94,13 +87,10 @@ isRawType NAT  = True
 isRawType CHAR = True
 isRawType TEXT = True
 isRawType BOOL = True
-isRawType DATE = True
 isRawType _    = False
-
 isEncrypted : Ty -> Bool
 isEncrypted (CRYPT _ _)         = True                  
 isEncrypted (WATERMARK _ t)     = isEncrypted t
-isEncrypted (PRE_WATERMARK _ t) = isEncrypted t
 isEncrypted _                   = False
 
 -----------------------------------------------------------------
@@ -151,9 +141,7 @@ watEnv : (a : Attribute) -> WmTy -> (env :Env n) ->
          {auto p : So (isInEnv a env)} -> Env n
 watEnv  a wms env  =  map (\s => if (elem a s) then replaceOn a (fst a,
                        WATERMARK wms (snd a)) s else s) env 
-
-                             PRE_WATERMARK wms (snd a)) s else s) env 
-
+                       
 ------------------------------------------------------------------------------
 -- Pred +  Query
 ------------------------------------------------------------------------------
@@ -169,21 +157,7 @@ namespace query
     AND      : Pred Δ -> Pred Δ -> Pred Δ
     ||| Logical OR
     OR       : Pred Δ  -> Pred Δ  -> Pred Δ
-    ||| Test that values of `a` contains `pat`.
-    |||
-    ||| @ p proof that `a` is an attribute of `Δ`.
-    Like     : (a : Attribute) -> (pat : String) ->
-               {auto p : Elem a Δ} ->
-               -- Like (snd a) => -- to add the like interface
-               Pred Δ
-    ||| Test that values of `a` are a next week date.
-    |||
-    ||| @ p1 proof that `a` is a `DATE`.
-    ||| @ p2 proof that `a` is an attribute of `Δ`.
-    NextWeek : (a : Attribute) ->
-               {default Refl p1 : DATE = (snd a)} ->
-               {auto p2 : Elem a Δ} ->
-               Pred Δ
+    
     ||| Test that values of `a` are equals to `v`.
     |||
     ||| @ v a value with the idris type of `a`.
@@ -193,7 +167,7 @@ namespace query
                --Equal (snd a) => -- Note the presence of our interface
                --Eq (interpTy (snd a))   => -- For debugging only,
                --Show (interpTy (snd a)) => -- not required
-    IN       : (a : Attribute) -> (s : Schema) -> {auto p1 : So ((length s) == 1)} ->
+    IN       : (a : Attribute) -> (s : Schema) ->  {auto p1 : So ((length s) == 1)} ->
                {auto p2 : Elem a Δ} -> Pred Δ
              
 ||| predicate that contains information for reading the tattoo
@@ -205,8 +179,7 @@ namespace query
 
  data ReadM : WmTy -> Type where
        RGIG : (k:Key) -> (t:Nat) -> (s:List String) -> (r:Nat) -> ReadM GIG
-       RPCI : Key -> Key -> ReadM PCI
-      
+       
 ||| predicate that contains information for decryption     
       
  data DecryptI : CryptTy -> Type where
@@ -216,6 +189,14 @@ namespace query
 --------------------------------------------------------------------------
 -- Query ADT  
 -------------------------------------------------------------------------- 
+
+-- needed attributes
+
+ MyTattoo : Attribute
+ MyTattoo = ("watermark",TEXT)
+ 
+ Cnt : Attribute
+ Cnt = ("Count", NAT)  
 
  data Query : Schema -> Type where
 
@@ -258,8 +239,7 @@ namespace privy
 
  data Privy : (env0 : Env n) -> (env1 : Env m) -> (Δ : Schema) -> Type where
  
-   ||| @ Wat is the newly added watermarking constructor
-    
+   |||@ Wat is the newly added watermarking constructor 
    Wat          : (a : Attribute)-> 
                   {auto p1 : So (isRawType (snd a))} ->
                   {auto p2 : So (isInEnv a env)} -> 
@@ -297,10 +277,8 @@ basicType  TEXT                    =  TEXT
 basicType  BOOL                    =  BOOL
 basicType  CHAR                    =  CHAR
 basicType  DATE                    =  DATE
-basicType  IMAGE                   =  IMAGE
 basicType (CRYPT _ t)              = basicType t
 basicType (WATERMARK _ t)          = basicType t
-basicType (PRE_WATERMARK _ t)      = basicType t
 
 ||| an abstract query execution consists in data extraction 
 
@@ -383,11 +361,6 @@ namespace sugar
 -- Predicate sugar
 
   -- export
- like : (a : Attribute) -> String -> {auto p : Elem a Δ} ->
-        Pred Δ
- like = Like
-
-  -- export
  (&&) : Pred Δ -> Pred Δ -> Pred Δ
  (&&) = AND
 
@@ -403,11 +376,6 @@ namespace sugar
        --Show (interpTy (snd a)) =>
         Pred Δ
  (==) = Equal
-
-  -- export
- nextWeek : (a : Attribute) -> {default Refl p1 : DATE = (snd a)} ->
-            {auto p2 : Elem a Δ} -> Pred Δ
- nextWeek = NextWeek
 
  π : (δ : Schema) -> Query Δ -> {auto p :Inc δ Δ} -> Query δ
  π = Project
@@ -529,13 +497,13 @@ leftCloudEnv = [index 1 SafeTPEnv']
 rightCloudEnv : Env 1
 rightCloudEnv = [index 0 SafeTPEnv',  index 2 SafeTPEnv']
 
-leftCloudTab : Schema
+leftCloudTab : Schema -- zip, gender
 leftCloudTab = index 1 SafeTPEnv'
 
-rightCloudTab1 : Schema
+rightCloudTab1 : Schema  -- genetic data
 rightCloudTab1 = index 0 SafeTPEnv'
 
-rightCloudTab2 : Schema
+rightCloudTab2 : Schema  -- age, caseCtrl
 rightCloudTab2 = index 2 SafeTPEnv'
 -------------------------------------------- Spécification de l'environnement
 
@@ -626,10 +594,11 @@ scenario =  do
  let plainData   = defrag (defrag demDatal demDatar) vcfFiles 
  
  TTP `ReturnResults` (G1,TTP `Compute` plainData)
-   
+
  -----------------------------------------------------------------------
  -- Examples of type checking errors
  -----------------------------------------------------------------------
+ 
 -- drop comments to see type checking errors 
 
 -- ill-typed-env; 
@@ -644,10 +613,10 @@ scenario =  do
 -- replace rightCloudTab2 with rightCloudTab1 
 -- ill-typed, wrong targeted table ! 
     
-Q2bis : Query [SubjectId,Age]                          
-Q2bis =  π [SubjectId,Age]
-    $ Limit CASE 
-    $ σ ((SubjectId `IN` IDs1) && (CaseCtrl == True)) (toQuery rightCloudTab2);   
+--IllTypedQ2 : Query [SubjectId,Age]                          
+--IllTypedQ2 =  π [SubjectId,Age]
+--    $ Limit CASE 
+--   $ σ ((SubjectId `IN` IDs1) && (CaseCtrl == True)) (toQuery rightCloudTab2);   
     
       
 
