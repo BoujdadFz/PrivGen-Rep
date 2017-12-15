@@ -1,4 +1,4 @@
-#based on https://github.com/rcherrueau/C2QL/blob/master/composition-checker/Privy.idr
+-- #based on https://github.com/rcherrueau/C2QL/blob/master/composition-checker/Privy.idr
 
 import Data.List
 import Data.Vect
