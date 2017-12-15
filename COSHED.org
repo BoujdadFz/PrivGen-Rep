@@ -1,0 +1,45 @@
+Privacy by design is growing as a fundamental need in applications developement 
+of today. From conception to implementation, privacy concern should be considered 
+in the process as regard
+to the number of applications manipulating personal data. Genetic applications are no exception.
+Actually, if there is any application that needs much care about privacy then that would be
+genetic applications, that is explained by the very private aspect held by a genome.
+For instance, a research study whose purpose is to reveal 
+genes involved in the developement of a rare disease i.e.Turner syndrome; 
+would require huge samples which no single center may ever possess because of the lack
+of patients in a limited geographical area. Therefore,
+geneticians need to collaborate in this scenario in order to have significant sizes 
+of genetic
+data sets. Unfortunately, the serious sensitivity of genetic information  
+pushes geneticians to protect their collected genomes and hence,
+hamper the practical and flexible sharing of genetic data.
+
+Secure sharing of genetic data is an active research field, several cryptographic
+techniques were suggested to secure some specific scenarios. It is not rare when 
+solutions may also combine different techniques to achieve the fixed privacy goals
+e.g.homomorphic encryption/secure multi-party computation, encryption/fragmentation.
+However, no applicative suppport was given before to safely handle building 
+and querying
+of such complex environments. In the context of the 
+[[http://www.privgen.cominlabs.ueb.eu/fr/;jsessionid=940C8E5362ECF7AE4972A593E404BBFE][PrivGen]] project we aim to afford applicative support
+to genetic data sharing platforms in a specific privacy-aware architecture whose choice
+is motivated by geneticians needs involved in the same project.
+
+Our work for a COnstructive SHaring of gEnetic Data (COSHED) extends
+a previous [[http://ieeexplore.ieee.org/document/7345388/?reload=true][approach]]  (C2QL) of Cherrueau et al.  to what fits
+our needs. Concretely, we suggest a distributed multi-cloud-based architecture
+ defined with and by 
+a security layer. As for implementation, we extended C2QL with watermarking functions. 
+In fact, genetic data watermarking is a promising technique for integrity, 
+traceability or ownership protection. These properties constitute vital requirements 
+when 
+it comes to storing and processing genetic data. We started by defining 
+the relationship
+of watermarking with the already existing techniques 
+by introducing 
+the corresponding algebra of commutation laws, then, the abstract implementation shows
+that watermarking can be safely integrated and correctly manipulated in a heterogenous
+application. 
+
+
+   
