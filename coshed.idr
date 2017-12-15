@@ -1,3 +1,5 @@
+#based on https://github.com/rcherrueau/C2QL/blob/master/composition-checker/Privy.idr
+
 import Data.List
 import Data.Vect
 import Data.So
@@ -13,8 +15,8 @@ data CryptTy = AES | RC4 -- | ElGamal | RSA | ...
 
 data WmTy = GIG  
 
-data Ty   = BOOL | NAT | TEXT | WATERMARK WmTy Ty | CHAR 
-          | CRYPT CryptTy Ty 
+data Ty   = BOOL | NAT | TEXT | CHAR | CRYPT CryptTy Ty   
+          | WATERMARK WmTy Ty
 
 data Entity = Genetician | T3rdP | Cloud
                 
@@ -72,7 +74,6 @@ Eq Entity where
 --------------------------------------------------------------------------
 -- Boolean tests to use in proofs
 -------------------------------------------------------------------------- 
--- add this later :   {auto p : So (elem oa schema)} 
 
 ||| it uses isInEnv (Cherrrueau's et al. func) to proof that @oa is in @env
 ||| here it is 
@@ -80,21 +81,22 @@ Eq Entity where
 isInEnv : (a : Attribute) -> (env : Env n) -> Bool
 isInEnv a env = any (elem a) env
 
-||| guarantee that every data intended to be prewatermarked is raw. (not watermarked nor crypted).
- 
+||| guarantee that every data intended to be prewatermarked is raw. (not watermarked yet nor encrypted).
 isRawType : Ty -> Bool
 isRawType NAT  = True
 isRawType CHAR = True
 isRawType TEXT = True
 isRawType BOOL = True
 isRawType _    = False
+
+||| verifies if an attribtue is encrypted by evaluating its type
 isEncrypted : Ty -> Bool
 isEncrypted (CRYPT _ _)         = True                  
 isEncrypted (WATERMARK _ t)     = isEncrypted t
 isEncrypted _                   = False
 
 -----------------------------------------------------------------
--- Cherrueau's et al. copied (and eventually modified) functions 
+-- needed functions in the definition of ADTs, 
 ----------------------------------------------------------------- 
 
 data Inc : (xs : Schema) -> (ys : Schema) -> Type where
@@ -117,12 +119,8 @@ fragEnv : (δ : Schema) -> (Id : Attribute) -> (env : Env n) ->
 fragEnv δ Id env {n} =  let  Δs  = init env
                              Δ   = last env
                              lΔ  = fragSchema δ Δ Id
-                             --Δl  = the (Schema) (intersect δ Δ) --++ [Id])
-                             --Δr  = nub (Δ \\ δ) --++ [Id])
                              res = (Δs ++ lΔ )
-                        --in res     
                         in rewrite sym (plusTwoSucSuc n) in  res
-                        
     where
      --a gentle proof
     plusTwoSucSuc : (n : Nat) -> n + 2 = S (S n)
@@ -143,7 +141,7 @@ watEnv  a wms env  =  map (\s => if (elem a s) then replaceOn a (fst a,
                        WATERMARK wms (snd a)) s else s) env 
                        
 ------------------------------------------------------------------------------
--- Pred +  Query
+-- Pred ADT
 ------------------------------------------------------------------------------
 
 using (Δ : Schema, Δ' : Schema, δ : Schema, δ' : Schema,
@@ -200,12 +198,6 @@ namespace query
 
  data Query : Schema -> Type where
 
-       ReadW   : (a : Attribute) -> (info : ReadM GIG) -> 
-                 {default Refl p1 : (snd a) = (WATERMARK GIG t)} ->
-                 Query Δ ->
-                 {auto p2 :Data.List.Elem a Δ} -> 
-                 Query ((replaceOn a (fst a, t) Δ)++[MyTattoo])
-                 
        Project : (δ : Schema) -> Query Δ -> {auto p : Inc δ Δ} ->
                  Query δ
        Product : Query Δ -> Query Δ' -> Query (Δ ++ Δ')
@@ -227,6 +219,13 @@ namespace query
       
        Defrag : (q1 : Query δ) -> (q2 : Query δ') ->
                  Query (nub (δ ++ δ'))
+                 
+       |||@ ReadW is the newly added watermarking destructor
+       ReadW   : (a : Attribute) -> (info : ReadM GIG) -> 
+                 {default Refl p1 : (snd a) = (WATERMARK GIG t)} ->
+                 Query Δ ->
+                 {auto p2 :Data.List.Elem a Δ} -> 
+                 Query ((replaceOn a (fst a, t) Δ)++[MyTattoo])
                                 
        ToQuery  : (Δ : Schema) -> Query Δ 
        
@@ -239,12 +238,6 @@ namespace privy
 
  data Privy : (env0 : Env n) -> (env1 : Env m) -> (Δ : Schema) -> Type where
  
-   |||@ Wat is the newly added watermarking constructor 
-   Wat          : (a : Attribute)-> 
-                  {auto p1 : So (isRawType (snd a))} ->
-                  {auto p2 : So (isInEnv a env)} -> 
-                  Privy env (watEnv a GIG env) []
-             
    Crypt        : (a : Attribute) -> (c : CryptTy) ->
                   {auto p : So (isInEnv a env)} ->
                    Privy env (cryptEnv a c env) []
@@ -262,15 +255,19 @@ namespace privy
                   (Query δ -> Privy env' env'' δ') ->
                   Privy env env'' δ'
                     
-   Return       : Query δ -> Privy env env δ   
+   Return       : Query δ -> Privy env env δ  
+   
+   |||@ Wat is the newly added watermarking constructor 
+   Wat          : (a : Attribute)-> 
+                  {auto p1 : So (isRawType (snd a))} ->
+                  {auto p2 : So (isInEnv a env)} -> 
+                  Privy env (watEnv a GIG env) []
    
 
 -----------------------------------------------------------------------------------
 -- GeneticQuery ADT 
 -----------------------------------------------------------------------------------
  
-||| complete this function's definition
-
 basicType : Ty -> Ty
 basicType  NAT                     =  NAT
 basicType  TEXT                    =  TEXT
@@ -281,7 +278,6 @@ basicType (CRYPT _ t)              = basicType t
 basicType (WATERMARK _ t)          = basicType t
 
 ||| an abstract query execution consists in data extraction 
-
 extractData : {Δ:Schema}   -> Query Δ -> Schema
 extractData (Project s _)       = s                                           
 extractData (Count s _)         = s ++ [Cnt]
@@ -299,11 +295,6 @@ executeRequest  :  (executer : Entity) ->
                    (request : List (Query Δ)) -> Schema
 executeRequest _ ld = foldl union [] (map (extractData) ld)                       
                                                            
-                                                                                
-------------------------------------------------------------------------------------------
--- new ADT for scenario building
-------------------------------------------------------------------------------------------
-                                                                 
 namespace geneticquery
  
  
