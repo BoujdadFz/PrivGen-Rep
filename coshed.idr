@@ -75,13 +75,10 @@ Eq Entity where
 -- Boolean tests to use in proofs
 -------------------------------------------------------------------------- 
 
-||| it uses isInEnv (Cherrrueau's et al. func) to proof that @oa is in @env
-||| here it is 
-
 isInEnv : (a : Attribute) -> (env : Env n) -> Bool
 isInEnv a env = any (elem a) env
 
-||| guarantee that every data intended to be prewatermarked is raw. (not watermarked yet nor encrypted).
+||| guarantees that every data intended to be prewatermarked is raw. (not watermarked yet nor encrypted).
 isRawType : Ty -> Bool
 isRawType NAT  = True
 isRawType CHAR = True
@@ -133,8 +130,6 @@ cryptEnv : (oa : Attribute) -> CryptTy -> (env:Env n) ->
 cryptEnv oa c env  =  map (\s => if (elem oa s) then replaceOn oa (fst oa
                                 , CRYPT c (snd oa)) s else s) env 
 
-||| new function
-
 watEnv : (a : Attribute) -> WmTy -> (env :Env n) -> 
          {auto p : So (isInEnv a env)} -> Env n
 watEnv  a wms env  =  map (\s => if (elem a s) then replaceOn a (fst a,
@@ -182,7 +177,7 @@ namespace query
       
  data DecryptI : CryptTy -> Type where
    AESD     : Key -> DecryptI AES
-   RC4D     : Key -> DecryptI RC4
+-- RC4D     : Key -> DecryptI RC4
    
 --------------------------------------------------------------------------
 -- Query ADT  
@@ -220,7 +215,7 @@ namespace query
        Defrag : (q1 : Query δ) -> (q2 : Query δ') ->
                  Query (nub (δ ++ δ'))
                  
-       |||@ ReadW is the newly added watermarking destructor
+       |||@ ReadW watermarking destructor
        ReadW   : (a : Attribute) -> (info : ReadM GIG) -> 
                  {default Refl p1 : (snd a) = (WATERMARK GIG t)} ->
                  Query Δ ->
@@ -257,7 +252,7 @@ namespace privy
                     
    Return       : Query δ -> Privy env env δ  
    
-   |||@ Wat is the newly added watermarking constructor 
+   |||@ Wat watermarking constructor 
    Wat          : (a : Attribute)-> 
                   {auto p1 : So (isRawType (snd a))} ->
                   {auto p2 : So (isInEnv a env)} -> 
@@ -296,7 +291,6 @@ executeRequest  :  (executer : Entity) ->
 executeRequest _ ld = foldl union [] (map (extractData) ld)                       
                                                            
 namespace geneticquery
- 
  
  data GeneticQuery :   Schema -> Type where
  
@@ -410,9 +404,9 @@ namespace sugar
  toQuery = ToQuery
 }
 
---------------------------------------------------------------------------
--- Instantiations for the trusted party genetic application
--------------------------------------------------------------------------- 
+----------------------------------------------------------------------------
+-- Instantiations for the multi-cloud and trusted party genetic application
+----------------------------------------------------------------------------
 
 ZIP : Attribute
 ZIP = ("ZIP code",NAT)
@@ -473,7 +467,7 @@ LocalEnv = [subject_vcf,subject]
 
 SafeTPEnv : Env 2
 SafeTPEnv = [[SubjectId,VariantWE, TypeVarWE,position],
-                          [SubjectId,ZIP,Gender],[SubjectId,Age,CaseCtrl]]
+             [SubjectId,ZIP,Gender],[SubjectId,Age,CaseCtrl]]
 
 SafeTPEnv' : Env 2           
 SafeTPEnv' = fragEnv [ZIP,Gender] SubjectId 
@@ -524,6 +518,10 @@ LeftCloud = Cloud
 RightCloud : Entity
 RightCloud = Cloud
 
+-------------------------------------------------------------------------
+-- Queries
+-------------------------------------------------------------------------  
+
 Q1 : Query [SubjectId,ZIP,Gender]
 Q1 = π [SubjectId,ZIP,Gender]
    $ σ (Gender == "male") (toQuery leftCloudTab); 
@@ -552,13 +550,11 @@ Q3 = π [SubjectId,VariantWE,TypeVarWE]
    $ σ ((SubjectId `IN` IDs2) && (position == 2 || position == 10))
        (toQuery rightCloudTab1);     
 
-
 Q3' : Query [SubjectId,VariantWE,TypeVarWE]      
 Q3' = π [SubjectId,VariantWE,TypeVarWE] 
    $ σ ((SubjectId `IN` IDs2') && (position == 2 || position == 10))
        (toQuery rightCloudTab1);     
                                                                            
-                         
 scenario : GeneticQuery [SubjectId,ZIP,Gender,Age,Variant,TypeVar,MyTattoo]
 scenario =  do
 
@@ -602,7 +598,7 @@ scenario =  do
 --                  crypt (fst TypeVar,WATERMARK GIG (snd TypeVar)) AES;  
   
 -- replace rightCloudTab2 with rightCloudTab1 
--- ill-typed, wrong targeted table ! 
+-- ill-typed, wrong targeted table! 
     
 --IllTypedQ2 : Query [SubjectId,Age]                          
 --IllTypedQ2 =  π [SubjectId,Age]
