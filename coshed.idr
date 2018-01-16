@@ -164,20 +164,15 @@ namespace query
                {auto p2 : Elem a Δ} -> Pred Δ
              
 ||| predicate that contains information for reading the tattoo
---|||
---|||  @ t secret threshold for feature selection  
---|||  @ s seed value for watermark string generation
---|||  @ k secret key of number of characters and symbols for digram matrix
---|||  @ r secret number of rounds 
+||| secrets parameters are brought to a single @ k
 
  data ReadM : WmTy -> Type where
-       RGIG : (k:Key) -> (t:Nat) -> (s:List String) -> (r:Nat) -> ReadM GIG
+       RGIG : (k:Key) -> ReadM GIG
        
 ||| predicate that contains information for decryption     
       
  data DecryptI : CryptTy -> Type where
    AESD     : Key -> DecryptI AES
--- RC4D     : Key -> DecryptI RC4
    
 --------------------------------------------------------------------------
 -- Query ADT  
@@ -576,8 +571,8 @@ scenario =  do
  
  let r1          = decrypt VariantWE (AESD "key2") vcfFiles;
  let r2          = decrypt TypeVarWE (AESD "key1") r1;
- let r3          = readW VariantW (RGIG "wkey1" 1 ["seed1"] 1) r2;
- let vcfFiles    = readW TypeVarW (RGIG "wkey2" 2 ["seed2"] 2) r3;
+ let r3          = readW VariantW (RGIG "wkey1") r2;
+ let vcfFiles    = readW TypeVarW (RGIG "wkey2") r3;
  let plainData   = defrag (defrag demDatal demDatar) vcfFiles 
  
  TTP `ReturnResults` (G1,TTP `Compute` plainData)
