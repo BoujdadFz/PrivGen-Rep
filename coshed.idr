@@ -430,20 +430,14 @@ VariantE = ("VARIANT", CRYPT AES CHAR)
 VariantW : Attribute
 VariantW = ("VARIANT", WATERMARK GIG CHAR)
 
+VariantWE     : Attribute
+VariantWE     = ("VARIANT",  (CRYPT AES (WATERMARK GIG CHAR)))
+
 TypeVar : Attribute
 TypeVar = ("TYPE_VARIANT", TEXT)
 
 TypeVarE : Attribute
 TypeVarE = ("TYPE_VARIANT", CRYPT AES TEXT)
-
-TypeVarW : Attribute
-TypeVarW = ("TYPE_VARIANT", WATERMARK GIG TEXT)
-
-VariantWE     : Attribute
-VariantWE     = ("VARIANT",  (CRYPT AES (WATERMARK GIG CHAR)))
-
-TypeVarWE : Attribute 
-TypeVarWE = ("TYPE_VARIANT", (CRYPT AES (WATERMARK GIG TEXT)))
 
 position : Attribute
 position = ("POS", NAT)
@@ -461,14 +455,13 @@ LocalEnv : Env 1
 LocalEnv = [subject_vcf,subject]
 
 SafeTPEnv : Env 2
-SafeTPEnv = [[SubjectId,VariantWE, TypeVarWE,position],
+SafeTPEnv = [[SubjectId,VariantWE, TypeVarE,position],
              [SubjectId,ZIP,Gender],[SubjectId,Age,CaseCtrl]]
 
 SafeTPEnv' : Env 2           
 SafeTPEnv' = fragEnv [ZIP,Gender] SubjectId 
-           $ cryptEnv (fst TypeVar,WATERMARK GIG (snd TypeVar)) AES 
-           $ cryptEnv (fst Variant,WATERMARK GIG (snd Variant)) AES
-           $ watEnv TypeVar GIG
+           $ cryptEnv TypeVar AES 
+           $ cryptEnv VariantW AES
            $ watEnv Variant GIG LocalEnv
 
 leftCloudEnv : Env 0
@@ -490,9 +483,8 @@ rightCloudTab2 = index 2 SafeTPEnv'
 specTPEnv : Privy LocalEnv  SafeTPEnv' []
 specTPEnv = do frag [ZIP,Gender] SubjectId; 
                  wat Variant;
-                 wat TypeVar;
-                 crypt (fst Variant,WATERMARK GIG (snd Variant)) AES;  
-                 crypt (fst TypeVar,WATERMARK GIG (snd TypeVar)) AES;
+                 crypt VariantW AES;  
+                 crypt TypeVar AES;
 
 -------------------------------------------------------------------------
 -- Scenario entities
@@ -540,13 +532,13 @@ IDs2 = extractData (π [SubjectId] Q2)
 IDs2' : Schema
 IDs2' = extractData (π [SubjectId] Q2') 
     
-Q3 : Query [SubjectId,VariantWE,TypeVarWE]       
-Q3 = π [SubjectId,VariantWE,TypeVarWE] 
+Q3 : Query [SubjectId,VariantWE,TypeVarE]       
+Q3 = π [SubjectId,VariantWE,TypeVarE] 
    $ σ ((SubjectId `IN` IDs2) && (position == 2 || position == 10))
        (toQuery rightCloudTab1);     
 
-Q3' : Query [SubjectId,VariantWE,TypeVarWE]      
-Q3' = π [SubjectId,VariantWE,TypeVarWE] 
+Q3' : Query [SubjectId,VariantWE,TypeVarE]      
+Q3' = π [SubjectId,VariantWE,TypeVarE] 
    $ σ ((SubjectId `IN` IDs2') && (position == 2 || position == 10))
        (toQuery rightCloudTab1);     
                                                                            
@@ -569,10 +561,9 @@ scenario =  do
  demDatar       <- RightCloud `SendData` (TTP,q2)
  vcfFiles       <- RightCloud `SendData` (TTP,q3)
  
- let r1          = decrypt VariantWE (AESD "key2") vcfFiles;
- let r2          = decrypt TypeVarWE (AESD "key1") r1;
- let r3          = readW VariantW (RGIG "wkey1") r2;
- let vcfFiles    = readW TypeVarW (RGIG "wkey2") r3;
+ let r1          = decrypt VariantWE (AESD "key1") vcfFiles;
+ let r2          = decrypt TypeVarE  (AESD "key2") r1;
+ let vcfFiles    = readW VariantW (RGIG "wkey1") r2;
  let plainData   = defrag (defrag demDatal demDatar) vcfFiles 
  
  TTP `ReturnResults` (G1,TTP `Compute` plainData)
@@ -588,9 +579,8 @@ scenario =  do
 --specTPEnv' : Privy LocalEnv  SafeTPEnv' []
 --specTPEnv' = do frag [ZIP,Gender] SubjectId; 
 --                  crypt Variant AES;  
---                  wat (fst Variant,CRYPT AES (snd Variant));
---                  wat TypeVar;
---                  crypt (fst TypeVar,WATERMARK GIG (snd TypeVar)) AES;  
+--                  wat VariantE          -- error
+--                  crypt TypeVar AES;  
   
 -- replace rightCloudTab2 with rightCloudTab1 
 -- ill-typed, wrong targeted table! 
@@ -598,7 +588,7 @@ scenario =  do
 --IllTypedQ2 : Query [SubjectId,Age]                          
 --IllTypedQ2 =  π [SubjectId,Age]
 --    $ Limit CASE 
---   $ σ ((SubjectId `IN` IDs1) && (CaseCtrl == True)) (toQuery rightCloudTab2);   
+--    $ σ ((SubjectId `IN` IDs1) && (CaseCtrl == True)) (toQuery rightCloudTab2);   
     
       
 
