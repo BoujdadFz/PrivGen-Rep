@@ -1,10 +1,9 @@
 Privacy by design is growing as a fundamental need in applications developement 
-of today. From conception to implementation, privacy concern should be considered 
-in the process as regard
-to the number of applications manipulating personal data. Genetic applications are no exception.
-Actually, if there is any application that needs much care about privacy then that would be
-genetic applications, that is explained by the very private aspect held by a genome.
-For instance, a research study whose purpose is to reveal 
+of today. From conception to implementation, privacy concerns should be tackled
+constructivey during the development process
+for applications manipulating personal data. Genetic analyses are a typical example of such applications.
+Actually, genetic data that is involved in biomedical studies carry very sensitive information like the health status of the target subject. In addition, classical anonymization methods do not apply to genetic data because of attacks that may link a genome to some individual based on phenotypic information deduced from the genome itself i.e. facial traits.
+Still, collaborative studies involving genetic data from different centers are currently needed by some very widely used anlysis methods like statistical ones used e.g. by the GWAS. For instance, a research study whose purpose is to reveal 
 genes involved in the developement of a rare disease i.e.Turner syndrome; 
 would require huge samples which no single center may ever possess because of the lack
 of patients in a limited geographical area. Therefore,
