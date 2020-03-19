@@ -7,10 +7,10 @@ Still, collaborative studies involving genetic data from different centers are c
 genes involved in the developement of a rare disease i.e.Turner syndrome; 
 would require huge samples which no single center may ever possess because of the lack
 of patients in a limited geographical area. Therefore,
-geneticians need to collaborate in this scenario in order to have significant sizes 
+geneticists need to collaborate in this scenario in order to have significant sizes 
 of genetic
 data sets. Unfortunately, the serious sensitivity of genetic information  
-pushes geneticians to protect their collected genomes and hence,
+pushes geneticists to protect their collected genomes and hence,
 hamper the practical and flexible sharing of genetic data.
 
 Secure sharing of genetic data is an active research field, several cryptographic
@@ -18,34 +18,27 @@ techniques were suggested to secure some specific scenarios. It is not rare when
 solutions may also combine different techniques to achieve the fixed privacy goals
 e.g.homomorphic encryption/secure multi-party computation, encryption/fragmentation.
 However, no applicative suppport was given before to safely handle building 
-and querying
-of such complex environments. In the context of the 
-[[http://www.privgen.cominlabs.ueb.eu/fr/;jsessionid=940C8E5362ECF7AE4972A593E404BBFE][PrivGen]] project we aim to afford applicative support
-to genetic data sharing platforms in a specific privacy-aware architecture whose choice
-is motivated by geneticians needs involved in the same project.
+and querying such complex environments. In the context of the 
+[[http://www.privgen.cominlabs.ueb.eu/fr/;jsessionid=940C8E5362ECF7AE4972A593E404BBFE][PrivGen]] project we aim to afford applicative support to genetic data sharing platforms in a specific privacy-aware architecture whose choice
+is motivated by geneticists needs involved in the same project.
 
 Our work for a COnstructive SHaring of gEnetic Data (COSHED) extends
 a previous [[http://ieeexplore.ieee.org/document/7345388/?reload=true][approach]]  (C2QL) of Cherrueau et al.  to what fits
-our needs. C2QL enables the development of privacy-aware applications 
+our needs. C2QL language enables the development of privacy-aware applications 
 by the implementation of distributed algorithms composing computations 
 involving encrypted and fragmented data, as well as client-side computations. 
 SQL-like queries are supported on top of possibly encrypted and fragmented data. 
-The ap- proach essentially consists of two parts: language support for the development
+The approach essentially consists of two parts: language support for the development
  of secure and privacy- preserving applications and an algebraic theory supporting
  corresponding optimizations and correctness proofs.
 
-
-Concretely, we suggest a distributed multi-cloud-based architecture
- defined with and by 
+Concretely, we suggest a distributed multi-cloud-based architecture defined with and by 
 a security layer. As for implementation, we extended C2QL with watermarking functions. 
 In fact, genetic data watermarking is a promising technique for integrity, 
 traceability or ownership protection. These properties constitute vital requirements 
-when 
-it comes to storing and processing genetic data. We started by defining 
-the relationship
-of watermarking with the already existing techniques 
-by introducing 
-the corresponding algebra of commutation laws, then, the abstract implementation shows
+when it comes to storing and processing genetic data. We started by defining 
+the commutative laws of watermarking with the already existing techniques 
+by introducing the corresponding algebra of commutation laws, then, the abstract implementation shows
 that watermarking can be safely integrated and correctly manipulated in a heterogenous
 application. 
 
