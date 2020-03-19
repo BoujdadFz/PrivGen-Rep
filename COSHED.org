@@ -1,5 +1,5 @@
 Privacy by design is growing as a fundamental need in applications developement 
-of today. From conception to implementation, privacy concerns should be tackled
+of today. From specification to implementation, privacy concerns should be tackled
 constructivey during the development process
 for applications manipulating personal data. Genetic analyses are a typical example of such applications.
 Actually, genetic data that is involved in biomedical studies carry very sensitive information like the health status of the target subject. In addition, classical anonymization methods do not apply to genetic data because of attacks that may link a genome to some individual based on phenotypic information deduced from the genome itself i.e. facial traits.
